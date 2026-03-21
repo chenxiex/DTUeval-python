@@ -27,6 +27,24 @@ Run the evaluation script (e.g. scan24, mesh mode)
 python eval.py --data <input> --scan 24 --mode mesh --dataset_dir <dataset_dir> --vis_out_dir <out_dir_for_visualization>
 ```
 
+To evaluate multiple scans at once, use `--scans` together with `--input_dir`. Each input file in `--input_dir` must be named `<scan_number>.ply`.
+
+Use `--scans=true` to run the default scan list:
+```
+[1,4,9,10,11,12,13,15,23,24,29,32,33,34,48,49,62,75,77,110,114,118]
+```
+
+```
+python eval.py --scans true --input_dir <dir_with_ply_files> --mode mesh --dataset_dir <dataset_dir> --vis_out_dir <out_dir_for_visualization>
+```
+
+Or pass a custom comma-separated list:
+```
+python eval.py --scans 1,4,9 --input_dir <dir_with_ply_files> --mode mesh --dataset_dir <dataset_dir> --vis_out_dir <out_dir_for_visualization>
+```
+
+Note: `--data` and `--scan` are used together for single-scan evaluation; `--input_dir` and `--scans` are used together for multi-scan evaluation.
+
 ## Discussion on randomness
 There is randomness in point cloud downsampling in both versions. It iterates through the points and delete the points with distance < 0.2. So the order of points matters. We randomly shuffle the points before downsampling. 
 
