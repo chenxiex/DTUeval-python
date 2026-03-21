@@ -166,6 +166,8 @@ if __name__ == '__main__':
     parser.add_argument('--input_dir', type=str, default=None,
                         help='Directory containing per-scan input files (used with --scans). '
                              'Each file should be named {<scan_number>:03d}.ply.')
+    parser.add_argument('--result_file', type=str, default=None,
+                        help='Path to the output file where scores will be written.')
     args = parser.parse_args()
 
     if args.scans is not None:
@@ -179,6 +181,9 @@ if __name__ == '__main__':
             parser.error('--input_dir is required when using --scans')
 
         results = {}
+        if args.result_file is not None:
+            with open(args.result_file, 'w') as f:
+                f.write(f'{"scan":>6}  {"d2s":>10}  {"s2d":>10}  {"mean":>10}\n')
         for scan in scan_list:
             data_path = os.path.join(args.input_dir, f'{scan:03}.ply')
             if not os.path.exists(data_path):
@@ -187,6 +192,9 @@ if __name__ == '__main__':
             print(f'Evaluating scan {scan} ...')
             mean_d2s, mean_s2d, over_all = eval_scan(args, scan, data_path)
             results[scan] = (mean_d2s, mean_s2d, over_all)
+            if args.result_file is not None:
+                with open(args.result_file, 'a') as f:
+                    f.write(f'{scan:>6}  {mean_d2s:>10.6f}  {mean_s2d:>10.6f}  {over_all:>10.6f}\n')
 
         print('\nSummary:')
         print(f'{"scan":>6}  {"d2s":>10}  {"s2d":>10}  {"mean":>10}')
@@ -194,6 +202,13 @@ if __name__ == '__main__':
             print(f'{scan:>6}  {d2s:>10.6f}  {s2d:>10.6f}  {mean:>10.6f}')
         overall_mean = np.mean([v[2] for v in results.values()])
         print(f'{"avg":>6}  {"":>10}  {"":>10}  {overall_mean:>10.6f}')
+        if args.result_file is not None:
+            with open(args.result_file, 'a') as f:
+                f.write(f'{"avg":>6}  {"":>10}  {"":>10}  {overall_mean:>10.6f}\n')
     else:
         # Single-scan mode
-        eval_scan(args, args.scan, args.data)
+        mean_d2s, mean_s2d, over_all = eval_scan(args, args.scan, args.data)
+        if args.result_file is not None:
+            with open(args.result_file, 'w') as f:
+                f.write(f'{"scan":>6}  {"d2s":>10}  {"s2d":>10}  {"mean":>10}\n')
+                f.write(f'{args.scan:>6}  {mean_d2s:>10.6f}  {mean_s2d:>10.6f}  {over_all:>10.6f}\n')
