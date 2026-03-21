@@ -165,7 +165,7 @@ if __name__ == '__main__':
                              'Requires --input_dir.')
     parser.add_argument('--input_dir', type=str, default=None,
                         help='Directory containing per-scan input files (used with --scans). '
-                             'Each file should be named <scan_number>.ply.')
+                             'Each file should be named {<scan_number>:03d}.ply.')
     args = parser.parse_args()
 
     if args.scans is not None:
@@ -180,7 +180,7 @@ if __name__ == '__main__':
 
         results = {}
         for scan in scan_list:
-            data_path = os.path.join(args.input_dir, f'{scan}.ply')
+            data_path = os.path.join(args.input_dir, f'{scan:03}.ply')
             if not os.path.exists(data_path):
                 print(f'Warning: input file not found for scan {scan}: {data_path}, skipping.')
                 continue
