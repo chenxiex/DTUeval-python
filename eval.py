@@ -4,6 +4,7 @@ import sklearn.neighbors as skln
 from tqdm import tqdm
 from scipy.io import loadmat
 import multiprocessing as mp
+import concurrent.futures
 import argparse
 import os
 
@@ -26,10 +27,10 @@ def write_vis_pcd(file, points, colors):
     pcd.colors = o3d.utility.Vector3dVector(colors)
     o3d.io.write_point_cloud(file, pcd)
 
-def eval_scan(args, scan, data_path):
+def eval_scan(args, scan, data_path, verbose=True):
     thresh = args.downsample_density
     if args.mode == 'mesh':
-        pbar = tqdm(total=9)
+        pbar = tqdm(total=9, disable=not verbose)
         pbar.set_description('read data mesh')
         data_mesh = o3d.io.read_triangle_mesh(data_path)
 
@@ -59,7 +60,7 @@ def eval_scan(args, scan, data_path):
         data_pcd = np.concatenate([vertices, new_pts], axis=0)
 
     elif args.mode == 'pcd':
-        pbar = tqdm(total=8)
+        pbar = tqdm(total=8, disable=not verbose)
         pbar.set_description('read data pcd')
         data_pcd_o3d = o3d.io.read_point_cloud(data_path)
         data_pcd = np.asarray(data_pcd_o3d.points)
@@ -146,6 +147,11 @@ def eval_scan(args, scan, data_path):
     print(mean_d2s, mean_s2d, over_all)
     return mean_d2s, mean_s2d, over_all
 
+def eval_scan_worker(packed):
+    """Wrapper for eval_scan used in parallel execution."""
+    args, scan, data_path = packed
+    return scan, eval_scan(args, scan, data_path, verbose=False)
+
 if __name__ == '__main__':
     mp.freeze_support()
 
@@ -168,6 +174,9 @@ if __name__ == '__main__':
                              'Each file should be named {<scan_number>:03d}.ply.')
     parser.add_argument('--result_file', type=str, default=None,
                         help='Path to the output file where scores will be written.')
+    parser.add_argument('--num_workers', type=int, default=1,
+                        help='Number of scans to evaluate in parallel (used with --scans). '
+                             'Default is 1 (sequential).')
     args = parser.parse_args()
 
     if args.scans is not None:
@@ -184,17 +193,42 @@ if __name__ == '__main__':
         if args.result_file is not None:
             with open(args.result_file, 'w') as f:
                 f.write(f'{"scan":>6}  {"d2s":>10}  {"s2d":>10}  {"mean":>10}\n')
+
+        # Build the list of valid (scan, data_path) pairs
+        scan_tasks = []
         for scan in scan_list:
             data_path = os.path.join(args.input_dir, f'{scan:03}.ply')
             if not os.path.exists(data_path):
                 print(f'Warning: input file not found for scan {scan}: {data_path}, skipping.')
                 continue
-            print(f'Evaluating scan {scan} ...')
-            mean_d2s, mean_s2d, over_all = eval_scan(args, scan, data_path)
-            results[scan] = (mean_d2s, mean_s2d, over_all)
+            scan_tasks.append((scan, data_path))
+
+        num_workers = max(1, args.num_workers)
+        if num_workers == 1:
+            # Sequential mode
+            for scan, data_path in scan_tasks:
+                print(f'Evaluating scan {scan} ...')
+                mean_d2s, mean_s2d, over_all = eval_scan(args, scan, data_path)
+                results[scan] = (mean_d2s, mean_s2d, over_all)
+                if args.result_file is not None:
+                    with open(args.result_file, 'a') as f:
+                        f.write(f'{scan:>6}  {mean_d2s:>10.6f}  {mean_s2d:>10.6f}  {over_all:>10.6f}\n')
+        else:
+            # Parallel mode: process up to num_workers scans concurrently
+            packed_tasks = [(args, scan, data_path) for scan, data_path in scan_tasks]
+            with concurrent.futures.ProcessPoolExecutor(max_workers=num_workers) as executor:
+                futures = {executor.submit(eval_scan_worker, task): task[1] for task in packed_tasks}
+                for future in tqdm(concurrent.futures.as_completed(futures),
+                                   total=len(futures), desc='Evaluating scans'):
+                    scan, (mean_d2s, mean_s2d, over_all) = future.result()
+                    results[scan] = (mean_d2s, mean_s2d, over_all)
+            # Write results to file in scan order
             if args.result_file is not None:
                 with open(args.result_file, 'a') as f:
-                    f.write(f'{scan:>6}  {mean_d2s:>10.6f}  {mean_s2d:>10.6f}  {over_all:>10.6f}\n')
+                    for scan in scan_list:
+                        if scan in results:
+                            mean_d2s, mean_s2d, over_all = results[scan]
+                            f.write(f'{scan:>6}  {mean_d2s:>10.6f}  {mean_s2d:>10.6f}  {over_all:>10.6f}\n')
 
         print('\nSummary:')
         print(f'{"scan":>6}  {"d2s":>10}  {"s2d":>10}  {"mean":>10}')

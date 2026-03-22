@@ -43,7 +43,12 @@ Or pass a custom comma-separated list:
 python eval.py --scans 1,4,9 --input_dir <dir_with_ply_files> --mode mesh --dataset_dir <dataset_dir> --vis_out_dir <out_dir_for_visualization>
 ```
 
-Note: `--data` and `--scan` are used together for single-scan evaluation; `--input_dir` and `--scans` are used together for multi-scan evaluation.
+To speed up multi-scan evaluation, use `--num_workers` to process multiple scans in parallel:
+```
+python eval.py --scans true --input_dir <dir_with_ply_files> --mode mesh --dataset_dir <dataset_dir> --vis_out_dir <out_dir_for_visualization> --num_workers 4
+```
+
+Note: `--data` and `--scan` are used together for single-scan evaluation; `--input_dir` and `--scans` are used together for multi-scan evaluation. `--num_workers` only applies to multi-scan (`--scans`) mode.
 
 ## Discussion on randomness
 There is randomness in point cloud downsampling in both versions. It iterates through the points and delete the points with distance < 0.2. So the order of points matters. We randomly shuffle the points before downsampling. 
