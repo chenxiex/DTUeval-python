@@ -182,6 +182,9 @@ if __name__ == '__main__':
         if parent:
             os.makedirs(parent, exist_ok=True)
 
+    if not args.no_vis_out:
+        os.makedirs(args.vis_out_dir, exist_ok=True)
+
     if args.scans is not None:
         # Multi-scan mode
         if args.scans.lower() == 'true':
