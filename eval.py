@@ -165,7 +165,7 @@ if __name__ == '__main__':
     parser.add_argument('--num_workers', type=int, default=-1,
                         help='Number of worker processes/threads to use. '
                              'Set to -1 to use all available CPUs. '
-                             'Default is 1 to avoid exhausting system resources.')
+                             'Default is -1.')
     parser.add_argument('--scans', type=str, default=None,
                         help='Evaluate multiple scans. Use "true" for the default scan list, '
                              'or provide a comma-separated list of scan numbers (e.g. "1,4,9"). '
