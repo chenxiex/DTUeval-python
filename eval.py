@@ -162,7 +162,7 @@ if __name__ == '__main__':
     parser.add_argument('--patch_size', type=float, default=60)
     parser.add_argument('--max_dist', type=float, default=20)
     parser.add_argument('--visualize_threshold', type=float, default=10)
-    parser.add_argument('--num_workers', type=int, default=1,
+    parser.add_argument('--num_workers', type=int, default=-1,
                         help='Number of worker processes/threads to use. '
                              'Set to -1 to use all available CPUs. '
                              'Default is 1 to avoid exhausting system resources.')
