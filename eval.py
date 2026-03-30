@@ -123,21 +123,22 @@ def eval_scan(args, scan, data_path):
 
     pbar.update(1)
     pbar.set_description('visualize error')
-    vis_dist = args.visualize_threshold
-    R = np.array([[1,0,0]], dtype=np.float64)
-    G = np.array([[0,1,0]], dtype=np.float64)
-    B = np.array([[0,0,1]], dtype=np.float64)
-    W = np.array([[1,1,1]], dtype=np.float64)
-    data_color = np.tile(B, (data_down.shape[0], 1))
-    data_alpha = dist_d2s.clip(max=vis_dist) / vis_dist
-    data_color[ np.where(inbound)[0][grid_inbound][in_obs] ] = R * data_alpha + W * (1-data_alpha)
-    data_color[ np.where(inbound)[0][grid_inbound][in_obs][dist_d2s[:,0] >= max_dist] ] = G
-    write_vis_pcd(f'{args.vis_out_dir}/vis_{scan:03}_d2s.ply', data_down, data_color)
-    stl_color = np.tile(B, (stl.shape[0], 1))
-    stl_alpha = dist_s2d.clip(max=vis_dist) / vis_dist
-    stl_color[ np.where(above)[0] ] = R * stl_alpha + W * (1-stl_alpha)
-    stl_color[ np.where(above)[0][dist_s2d[:,0] >= max_dist] ] = G
-    write_vis_pcd(f'{args.vis_out_dir}/vis_{scan:03}_s2d.ply', stl, stl_color)
+    if not args.no_vis_out:
+        vis_dist = args.visualize_threshold
+        R = np.array([[1,0,0]], dtype=np.float64)
+        G = np.array([[0,1,0]], dtype=np.float64)
+        B = np.array([[0,0,1]], dtype=np.float64)
+        W = np.array([[1,1,1]], dtype=np.float64)
+        data_color = np.tile(B, (data_down.shape[0], 1))
+        data_alpha = dist_d2s.clip(max=vis_dist) / vis_dist
+        data_color[ np.where(inbound)[0][grid_inbound][in_obs] ] = R * data_alpha + W * (1-data_alpha)
+        data_color[ np.where(inbound)[0][grid_inbound][in_obs][dist_d2s[:,0] >= max_dist] ] = G
+        write_vis_pcd(f'{args.vis_out_dir}/vis_{scan:03}_d2s.ply', data_down, data_color)
+        stl_color = np.tile(B, (stl.shape[0], 1))
+        stl_alpha = dist_s2d.clip(max=vis_dist) / vis_dist
+        stl_color[ np.where(above)[0] ] = R * stl_alpha + W * (1-stl_alpha)
+        stl_color[ np.where(above)[0][dist_s2d[:,0] >= max_dist] ] = G
+        write_vis_pcd(f'{args.vis_out_dir}/vis_{scan:03}_s2d.ply', stl, stl_color)
 
     pbar.update(1)
     pbar.set_description('done')
@@ -155,6 +156,8 @@ if __name__ == '__main__':
     parser.add_argument('--mode', type=str, default='mesh', choices=['mesh', 'pcd'])
     parser.add_argument('--dataset_dir', type=str, default='.')
     parser.add_argument('--vis_out_dir', type=str, default='.')
+    parser.add_argument('--no_vis_out', action='store_true', default=False,
+                        help='Disable visualization output files.')
     parser.add_argument('--downsample_density', type=float, default=0.2)
     parser.add_argument('--patch_size', type=float, default=60)
     parser.add_argument('--max_dist', type=float, default=20)
