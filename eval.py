@@ -177,6 +177,11 @@ if __name__ == '__main__':
                         help='Path to the output file where scores will be written.')
     args = parser.parse_args()
 
+    if args.result_file is not None:
+        parent = os.path.dirname(args.result_file)
+        if parent:
+            os.makedirs(parent, exist_ok=True)
+
     if args.scans is not None:
         # Multi-scan mode
         if args.scans.lower() == 'true':
