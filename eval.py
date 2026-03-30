@@ -52,7 +52,7 @@ def eval_scan(args, scan, data_path):
         n1 = np.floor(l1 / thr)
         n2 = np.floor(l2 / thr)
 
-        with mp.Pool() as mp_pool:
+        with mp.Pool(processes=None if args.num_workers == -1 else args.num_workers) as mp_pool:
             new_pts = mp_pool.map(sample_single_tri, ((n1[i,0], n2[i,0], v1[i:i+1], v2[i:i+1], tri_vert[i:i+1,0]) for i in range(len(n1))), chunksize=1024)
 
         new_pts = np.concatenate(new_pts, axis=0)
@@ -71,7 +71,7 @@ def eval_scan(args, scan, data_path):
 
     pbar.update(1)
     pbar.set_description('downsample pcd')
-    nn_engine = skln.NearestNeighbors(n_neighbors=1, radius=thresh, algorithm='kd_tree', n_jobs=-1)
+    nn_engine = skln.NearestNeighbors(n_neighbors=1, radius=thresh, algorithm='kd_tree', n_jobs=args.num_workers)
     nn_engine.fit(data_pcd)
     rnn_idxs = nn_engine.radius_neighbors(data_pcd, radius=thresh, return_distance=False)
     mask = np.ones(data_pcd.shape[0], dtype=np.bool_)
@@ -159,6 +159,10 @@ if __name__ == '__main__':
     parser.add_argument('--patch_size', type=float, default=60)
     parser.add_argument('--max_dist', type=float, default=20)
     parser.add_argument('--visualize_threshold', type=float, default=10)
+    parser.add_argument('--num_workers', type=int, default=1,
+                        help='Number of worker processes/threads to use. '
+                             'Set to -1 to use all available CPUs. '
+                             'Default is 1 to avoid exhausting system resources.')
     parser.add_argument('--scans', type=str, default=None,
                         help='Evaluate multiple scans. Use "true" for the default scan list, '
                              'or provide a comma-separated list of scan numbers (e.g. "1,4,9"). '
