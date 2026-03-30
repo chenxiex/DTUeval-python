@@ -76,3 +76,5 @@ We evaluate a set of meshes from Colmap and compare the results. We run our scri
 - Blue: Out of bounding box or ObsMask
 - Green: Errors larger than threshold (20)
 - White to Red: Errors counted in the reported statistics
+
+Pass `--no_vis_out` to skip writing the visualization files.
