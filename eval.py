@@ -215,11 +215,13 @@ if __name__ == '__main__':
         print(f'{"scan":>6}  {"d2s":>10}  {"s2d":>10}  {"mean":>10}')
         for scan, (d2s, s2d, mean) in results.items():
             print(f'{scan:>6}  {d2s:>10.6f}  {s2d:>10.6f}  {mean:>10.6f}')
+        overall_d2s = np.mean([v[0] for v in results.values()])
+        overall_s2d = np.mean([v[1] for v in results.values()])
         overall_mean = np.mean([v[2] for v in results.values()])
-        print(f'{"avg":>6}  {"":>10}  {"":>10}  {overall_mean:>10.6f}')
+        print(f'{"avg":>6}  {overall_d2s:>10.6f}  {overall_s2d:>10.6f}  {overall_mean:>10.6f}')
         if args.result_file is not None:
             with open(args.result_file, 'a') as f:
-                f.write(f'{"avg":>6}  {"":>10}  {"":>10}  {overall_mean:>10.6f}\n')
+                f.write(f'{"avg":>6}  {overall_d2s:>10.6f}  {overall_s2d:>10.6f}  {overall_mean:>10.6f}\n')
     else:
         # Single-scan mode
         mean_d2s, mean_s2d, over_all = eval_scan(args, args.scan, args.data)
