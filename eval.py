@@ -63,6 +63,9 @@ def eval_scan(args, scan, data_path):
         pbar.set_description('read data pcd')
         data_pcd_o3d = o3d.io.read_point_cloud(data_path)
         data_pcd = np.asarray(data_pcd_o3d.points)
+    
+    else:
+        raise ValueError(f'Unsupported mode: {args.mode}')
 
     pbar.update(1)
     pbar.set_description('random shuffle pcd index')
